@@ -5,6 +5,7 @@ edition = "2021"
 license = "MIT AND Apache-2.0"
 repository = "https://github.com/ChangeCaps/tauri-invoke"
 description = "A simple way to call tauri's invokes from rust wasm"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
