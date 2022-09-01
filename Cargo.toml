@@ -2,7 +2,7 @@
 name = "tauri-invoke"
 version = "0.1.0"
 edition = "2021"
-license = "MIT AND Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/ChangeCaps/tauri-invoke"
 description = "A simple way to call tauri's invokes from rust wasm"
 readme = "README.md"
