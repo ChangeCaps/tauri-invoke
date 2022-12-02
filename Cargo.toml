@@ -1,6 +1,6 @@
 [package]
 name = "tauri-invoke"
-version = "0.1.1"
+version = "0.2.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/ChangeCaps/tauri-invoke"
@@ -13,3 +13,8 @@ readme = "README.md"
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
+
+yew = { version = "0.20", optional = true }
+
+[features]
+default = []

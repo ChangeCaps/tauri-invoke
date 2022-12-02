@@ -12,11 +12,15 @@
 use wasm_bindgen::prelude::*;
 
 #[doc(hidden)]
-pub use ::js_sys;
+pub use js_sys;
 #[doc(hidden)]
-pub use ::wasm_bindgen;
+pub use wasm_bindgen;
 #[doc(hidden)]
-pub use ::wasm_bindgen_futures;
+pub use wasm_bindgen_futures;
+
+#[cfg(feature = "yew")]
+#[doc(hidden)]
+pub use yew;
 
 #[wasm_bindgen]
 extern "C" {
@@ -40,8 +44,8 @@ extern "C" {
 #[macro_export]
 macro_rules! invoke {
     {
-        $name:ident -> $ty:ty
-        $(, $arg:ident : $val:expr)* $(,)?
+        $name:ident -> $ty:ty $(,)?
+        $(, $arg:ident : $val:expr),* $(,)?
     } => {async {
         let args = $crate::js_sys::Map::new();
 
@@ -60,5 +64,24 @@ macro_rules! invoke {
         let promise = $crate::js_sys::Promise::from(output);
         let result = $crate::wasm_bindgen_futures::JsFuture::from(promise).await.unwrap();
         result.into_serde::<$ty>().unwrap()
+    }};
+}
+
+/// Use this macro to call an invoke from rust.
+///
+/// For more information see [`invoke`].
+///
+/// This macro should only be used in a context where a [`yew::hook`] should be used.
+#[cfg(feature = "yew")]
+#[macro_export]
+macro_rules! use_invoke {
+    {
+        $name:ident -> $ty:ty $(,)?
+        $(, $arg:ident : $val:expr)* $(,)?
+    } => {{
+        $crate::yew::use_future($crate::invoke! {
+            $name -> $ty
+            $(, $arg : $val)*
+        })
     }};
 }
