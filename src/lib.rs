@@ -34,7 +34,7 @@ extern "C" {
 /// with the arguments `foo` and `bar`.
 /// Here `future` is a [`Future`](std::future::Future) that resolves to a [`String`].
 /// ```rust
-/// // calls 'tauri_invoke'
+/// // calls 'example_invoke'
 /// let future = invoke! {
 ///     example_invoke -> String,
 ///     foo: 1.0,
