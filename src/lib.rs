@@ -14,6 +14,8 @@ use wasm_bindgen::prelude::*;
 #[doc(hidden)]
 pub use js_sys;
 #[doc(hidden)]
+pub use serde_wasm_bindgen;
+#[doc(hidden)]
 pub use wasm_bindgen;
 #[doc(hidden)]
 pub use wasm_bindgen_futures;
@@ -44,15 +46,15 @@ extern "C" {
 #[macro_export]
 macro_rules! invoke {
     {
-        $name:ident -> $ty:ty $(,)?
-        $(, $arg:ident : $val:expr),* $(,)?
+        $name:ident -> $ty:ty
+        $(, $($arg:ident : $val:expr),*)? $(,)?
     } => {async {
         let args = $crate::js_sys::Map::new();
 
         $(
             args.set(
                 &$crate::wasm_bindgen::JsValue(::std::stringify!($arg)),
-                &$crate::wasm_bindgen::JsValue::from_serde(&$val).unwrap()
+                &$crate::serde_wasm_bindgen::to_value(&$val).unwrap(),
             );
         )*
 
@@ -63,7 +65,7 @@ macro_rules! invoke {
 
         let promise = $crate::js_sys::Promise::from(output);
         let result = $crate::wasm_bindgen_futures::JsFuture::from(promise).await.unwrap();
-        result.into_serde::<$ty>().unwrap()
+        $crate::serde_wasm_bindgen::from_value(result).expect("Failed to deserialize output of invoke, maybe the type is wrong?")
     }};
 }
 
@@ -76,12 +78,12 @@ macro_rules! invoke {
 #[macro_export]
 macro_rules! use_invoke {
     {
-        $name:ident -> $ty:ty $(,)?
-        $(, $arg:ident : $val:expr)* $(,)?
+        $name:ident -> $ty:ty
+        $(, $($arg:ident : $val:expr),*)? $(,)?
     } => {{
-        $crate::yew::use_future($crate::invoke! {
-            $name -> $ty
-            $(, $arg : $val)*
+        $crate::yew::suspense::use_future($crate::invoke! {
+            $name -> $ty,
+            $($arg : $val,)*
         })
     }};
 }
