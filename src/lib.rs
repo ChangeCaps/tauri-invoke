@@ -45,28 +45,36 @@ extern "C" {
 /// ```
 #[macro_export]
 macro_rules! invoke {
+    { $name:ident -> $return_type:ty $(,)?} => {
+        $crate::invoke! {@internal $name $return_type}
+    };
     {
-        $name:ident -> $ty:ty
-        $(, $($arg:ident : $val:expr),*)? $(,)?
-    } => {async {
-        let args = $crate::js_sys::Map::new();
+        $name:ident -> $ty:ty,
+        $($arg:ident : $val:expr),* $(,)?
+    } => {
+        $crate::invoke!(@internal $name $ty $(, $arg : $val)*)
+    };
+    { @internal $name:ident $ty:ty $(, $arg:ident : $val:expr)* } => {
+        async {
+            let args = $crate::js_sys::Map::new();
 
-        $(
-            args.set(
-                &$crate::wasm_bindgen::JsValue(::std::stringify!($arg)),
-                &$crate::serde_wasm_bindgen::to_value(&$val).unwrap(),
+            $(
+                args.set(
+                    &$crate::wasm_bindgen::JsValue::from(::std::stringify!($arg)),
+                    &$crate::serde_wasm_bindgen::to_value(&$val).unwrap(),
+                );
+            )*
+
+            let output = $crate::__TAURI_INVOKE__(
+                ::std::stringify!($name),
+                ::std::convert::From::from(args),
             );
-        )*
 
-        let output = $crate::__TAURI_INVOKE__(
-            ::std::stringify!($name),
-            ::std::convert::From::from(args),
-        );
-
-        let promise = $crate::js_sys::Promise::from(output);
-        let result = $crate::wasm_bindgen_futures::JsFuture::from(promise).await.unwrap();
-        $crate::serde_wasm_bindgen::from_value(result).expect("Failed to deserialize output of invoke, maybe the type is wrong?")
-    }};
+            let promise = $crate::js_sys::Promise::from(output);
+            let result = $crate::wasm_bindgen_futures::JsFuture::from(promise).await.unwrap();
+            $crate::serde_wasm_bindgen::from_value::<$ty>(result).expect("Failed to deserialize output of invoke, maybe the type is wrong?")
+        }
+    };
 }
 
 /// Use this macro to call an invoke from rust.
@@ -77,13 +85,7 @@ macro_rules! invoke {
 #[cfg(feature = "yew")]
 #[macro_export]
 macro_rules! use_invoke {
-    {
-        $name:ident -> $ty:ty
-        $(, $($arg:ident : $val:expr),*)? $(,)?
-    } => {{
-        $crate::yew::suspense::use_future($crate::invoke! {
-            $name -> $ty,
-            $($arg : $val,)*
-        })
+    { $($tt:tt)* } => {{
+        $crate::yew::suspense::use_future($crate::invoke!($($tt)*))
     }};
 }
