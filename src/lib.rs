@@ -86,6 +86,6 @@ macro_rules! invoke {
 #[macro_export]
 macro_rules! use_invoke {
     { $($tt:tt)* } => {{
-        $crate::yew::suspense::use_future($crate::invoke!($($tt)*))
+        $crate::yew::suspense::use_future(|| $crate::invoke!($($tt)*))
     }};
 }
