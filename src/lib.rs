@@ -30,15 +30,18 @@ extern "C" {
 /// # Examples
 /// ```rust
 /// // define an invoke
-/// invoke!(example_invoke(foo: f32, bar: bool) -> String);
+/// invoke!(async fn example_invoke(foo: f32, bar: bool) -> String);
 ///
 /// // call the invoke
 /// let future = example_invoke(1.0, false);
 /// ```
 #[macro_export]
 macro_rules! invoke {
-    { $vis:vis $name:ident ( $($arg:ident : $arg_ty:ty),* $(,)? ) -> $ty:ty  } => {
-        $vis async fn $name($($arg: $arg_ty),*) -> $ty {
+    { $( $vis:vis async fn $name:ident ( $($arg:ident : $arg_ty:ty),* $(,)? ) $(-> $ty:ty)? ; )* } => {
+        $crate::invoke!($( $vis $name($($arg: $arg_ty),*) $(-> $ty)? ),*);
+    };
+    { $( $vis:vis async fn $name:ident ( $($arg:ident : $arg_ty:ty),* $(,)? ) $(-> $ty:ty)? ),* $(,)? } => {$(
+        $vis async fn $name($($arg: $arg_ty),*) $(-> $ty)? {
             let args = $crate::js_sys::Map::new();
 
             $(
@@ -55,7 +58,8 @@ macro_rules! invoke {
 
             let promise = $crate::js_sys::Promise::from(output);
             let result = $crate::wasm_bindgen_futures::JsFuture::from(promise).await.unwrap();
-            $crate::serde_wasm_bindgen::from_value::<$ty>(result).expect("Failed to deserialize output of invoke, maybe the type is wrong?")
+            $crate::serde_wasm_bindgen::from_value(result)
+                .expect("Failed to deserialize output of invoke, maybe the type is wrong?")
         }
-    };
+    )*};
 }
