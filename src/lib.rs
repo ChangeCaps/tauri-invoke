@@ -46,7 +46,7 @@ macro_rules! invoke {
 
             $(
                 args.set(
-                    &$crate::wasm_bindgen::JsValue::from(::std::stringify!($arg)),
+                    &$crate::wasm_bindgen::JsValue::from_str(::std::stringify!($arg)),
                     &$crate::serde_wasm_bindgen::to_value(&$arg).unwrap(),
                 );
             )*
