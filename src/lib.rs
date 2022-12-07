@@ -42,10 +42,11 @@ macro_rules! invoke {
     };
     { $( $vis:vis async fn $name:ident ( $($arg:ident : $arg_ty:ty),* $(,)? ) $(-> $ty:ty)? ),* $(,)? } => {$(
         $vis async fn $name($($arg: $arg_ty),*) $(-> $ty)? {
-            let args = $crate::js_sys::Map::new();
+            let args = $crate::js_sys::Object::new();
 
             $(
-                args.set(
+                $crate::js_sys::Reflect::set(
+                    &args,
                     &$crate::wasm_bindgen::JsValue::from_str(::std::stringify!($arg)),
                     &$crate::serde_wasm_bindgen::to_value(&$arg).unwrap(),
                 );
