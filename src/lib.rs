@@ -38,7 +38,7 @@ extern "C" {
 #[macro_export]
 macro_rules! invoke {
     { $( $vis:vis async fn $name:ident ( $($arg:ident : $arg_ty:ty),* $(,)? ) $(-> $ty:ty)? ; )* } => {
-        $crate::invoke!($( $vis $name($($arg: $arg_ty),*) $(-> $ty)? ),*);
+        $crate::invoke!($( $vis async fn $name($($arg: $arg_ty),*) $(-> $ty)? ),*);
     };
     { $( $vis:vis async fn $name:ident ( $($arg:ident : $arg_ty:ty),* $(,)? ) $(-> $ty:ty)? ),* $(,)? } => {$(
         $vis async fn $name($($arg: $arg_ty),*) $(-> $ty)? {
