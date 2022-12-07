@@ -20,10 +20,6 @@ pub use wasm_bindgen;
 #[doc(hidden)]
 pub use wasm_bindgen_futures;
 
-#[cfg(feature = "yew")]
-#[doc(hidden)]
-pub use yew;
-
 #[wasm_bindgen]
 extern "C" {
     #[doc(hidden)]
@@ -32,36 +28,23 @@ extern "C" {
 }
 
 /// # Examples
-/// Here we use [`invoke`] to call an invoke called `example_invoke`
-/// with the arguments `foo` and `bar`.
-/// Here `future` is a [`Future`](std::future::Future) that resolves to a [`String`].
 /// ```rust
-/// // calls 'example_invoke'
-/// let future = invoke! {
-///     example_invoke -> String,
-///     foo: 1.0,
-///     bar: false,
-/// };
+/// // define an invoke
+/// invoke!(example_invoke(foo: f32, bar: bool) -> String);
+///
+/// // call the invoke
+/// let future = example_invoke(1.0, false);
 /// ```
 #[macro_export]
 macro_rules! invoke {
-    { $name:ident -> $return_type:ty $(,)?} => {
-        $crate::invoke! {@internal $name $return_type}
-    };
-    {
-        $name:ident -> $ty:ty,
-        $($arg:ident : $val:expr),* $(,)?
-    } => {
-        $crate::invoke!(@internal $name $ty $(, $arg : $val)*)
-    };
-    { @internal $name:ident $ty:ty $(, $arg:ident : $val:expr)* } => {
-        async {
+    { $vis:vis $name:ident ( $($arg:ident : $arg_ty:ty),* $(,)? ) -> $ty:ty  } => {
+        $vis async fn $name($($arg: $arg_ty),*) -> $ty {
             let args = $crate::js_sys::Map::new();
 
             $(
                 args.set(
                     &$crate::wasm_bindgen::JsValue::from(::std::stringify!($arg)),
-                    &$crate::serde_wasm_bindgen::to_value(&$val).unwrap(),
+                    &$crate::serde_wasm_bindgen::to_value(&$arg).unwrap(),
                 );
             )*
 
@@ -75,17 +58,4 @@ macro_rules! invoke {
             $crate::serde_wasm_bindgen::from_value::<$ty>(result).expect("Failed to deserialize output of invoke, maybe the type is wrong?")
         }
     };
-}
-
-/// Use this macro to call an invoke from rust.
-///
-/// For more information see [`invoke`].
-///
-/// This macro should only be used in a context where a [`yew::hook`] should be used.
-#[cfg(feature = "yew")]
-#[macro_export]
-macro_rules! use_invoke {
-    { $($tt:tt)* } => {{
-        $crate::yew::suspense::use_future(|| $crate::invoke!($($tt)*))
-    }};
 }
