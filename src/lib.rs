@@ -27,6 +27,9 @@ extern "C" {
     pub fn __TAURI_INVOKE__(name: &str, arguments: JsValue) -> JsValue;
 }
 
+#[doc(hidden)]
+pub type InvokeResult<T = ()> = Result<T, String>;
+
 /// # Examples
 /// ```rust
 /// // define an invoke
@@ -41,7 +44,7 @@ macro_rules! invoke {
         $crate::invoke!($( $vis async fn $name($($arg: $arg_ty),*) $(-> $ty)? ),*);
     };
     { $( $vis:vis async fn $name:ident ( $($arg:ident : $arg_ty:ty),* $(,)? ) $(-> $ty:ty)? ),* $(,)? } => {$(
-        $vis async fn $name($($arg: $arg_ty),*) $(-> $ty)? {
+        $vis async fn $name($($arg: $arg_ty),*) -> $crate::InvokeResult$(<$ty>)? {
             let args = $crate::js_sys::Object::new();
 
             $(
@@ -49,7 +52,7 @@ macro_rules! invoke {
                     &args,
                     &$crate::wasm_bindgen::JsValue::from_str(::std::stringify!($arg)),
                     &$crate::serde_wasm_bindgen::to_value(&$arg).unwrap(),
-                );
+                ).expect("failed to set argument");
             )*
 
             let output = $crate::__TAURI_INVOKE__(
@@ -58,9 +61,18 @@ macro_rules! invoke {
             );
 
             let promise = $crate::js_sys::Promise::from(output);
-            let result = $crate::wasm_bindgen_futures::JsFuture::from(promise).await.unwrap();
-            $crate::serde_wasm_bindgen::from_value(result)
-                .expect("Failed to deserialize output of invoke, maybe the type is wrong?")
+            let result = $crate::wasm_bindgen_futures::JsFuture::from(promise).await;
+
+            Ok(match result {
+                #[allow(unused_variables)]
+                ::std::result::Result::Ok(value) => {$(
+                    $crate::serde_wasm_bindgen::from_value::<$ty>(value)
+                        .expect("Failed to deserialize output of invoke, maybe the type is wrong?")
+                )?},
+                ::std::result::Result::Err(err) => {
+                    return ::std::result::Result::Err(err.as_string().unwrap());
+                }
+            })
         }
     )*};
 }
