@@ -14,6 +14,8 @@ use wasm_bindgen::prelude::*;
 #[doc(hidden)]
 pub use js_sys;
 #[doc(hidden)]
+pub use serde;
+#[doc(hidden)]
 pub use serde_wasm_bindgen;
 #[doc(hidden)]
 pub use wasm_bindgen;
@@ -46,12 +48,13 @@ macro_rules! invoke {
     { $( $vis:vis async fn $name:ident ( $($arg:ident : $arg_ty:ty),* $(,)? ) $(-> $ty:ty)? ),* $(,)? } => {$(
         $vis async fn $name($($arg: $arg_ty),*) -> $crate::InvokeResult$(<$ty>)? {
             let args = $crate::js_sys::Object::new();
+            let serializer = $crate::serde_wasm_bindgen::Serializer::json_compatible();
 
             $(
                 $crate::js_sys::Reflect::set(
                     &args,
                     &$crate::wasm_bindgen::JsValue::from_str(::std::stringify!($arg)),
-                    &$crate::serde_wasm_bindgen::to_value(&$arg).unwrap(),
+                    &$crate::serde::Serialize::serialize(&$arg, &serializer).unwrap(),
                 ).expect("failed to set argument");
             )*
 
