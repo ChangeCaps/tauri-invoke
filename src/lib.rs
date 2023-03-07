@@ -2,7 +2,7 @@
 //!
 //! ```rust
 //! // define an invoke
-//! invoke!(async fn example_invoke(foo: f32, bar: bool) -> String);
+//! tauri_invoke::invoke!(async fn example_invoke(foo: f32, bar: bool) -> String);
 //!
 //! // call the invoke
 //! let future = example_invoke(1.0, false);
@@ -34,7 +34,7 @@ pub type InvokeResult<T = ()> = Result<T, String>;
 /// # Examples
 /// ```rust
 /// // define an invoke
-/// invoke!(async fn example_invoke(foo: f32, bar: bool) -> String);
+/// tauri_invoke::invoke!(async fn example_invoke(foo: f32, bar: bool) -> String);
 ///
 /// // call the invoke
 /// let future = example_invoke(1.0, false);
