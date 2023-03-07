@@ -1,12 +1,11 @@
 //! A simple way to call invoke in [tauri](https://crates.io/crates/tauri) from rust.
 //!
 //! ```rust
-//! // calls 'tauri_invoke'
-//! let future = invoke! {
-//!     tauri_invoke -> String,
-//!     foo: 1.0,
-//!     bar: false,
-//! };
+//! // define an invoke
+//! invoke!(async fn example_invoke(foo: f32, bar: bool) -> String);
+//!
+//! // call the invoke
+//! let future = example_invoke(1.0, false);
 //! ```
 
 use wasm_bindgen::prelude::*;
